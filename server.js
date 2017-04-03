@@ -18,32 +18,64 @@ app.get("/", function (request, response) {
   response.sendFile(__dirname + '/views/index.html');
 });
 
-function generateURL(url){
-  var xlength = ( Math.random().toString());
-  xlength = xlength.substr(2)
-  return url + xlength;
+function generateURL(){ 
+    var firstPart = (Math.random() * 46656) | 0;
+    var secondPart = (Math.random() * 46656) | 0;
+    firstPart = ("000" + firstPart.toString(36)).slice(-3);
+    secondPart = ("000" + secondPart.toString(36)).slice(-3);
+    var xlength = firstPart + secondPart;
+  if (findUid(xlength)){
+    generateURL();
+  }
+  return xlength;
 };
+
+function findUid(uid){ 
+ 
+    var MongoClient = require('mongodb').MongoClient
+
+    var URL = 'mongodb://tobiogunleye:Bagel99999@ds147900.mlab.com:47900/postmalone'; 
+    var togo = null;
+ 
+    MongoClient.connect(URL, function(err, db) {
+    
+      var collection = db.collection('url');
+      collection.find({uid: uid}).toArray(function(err, docs) {
+ 
+        if(docs.length){
+          return true
+        }  
+        db.close();
+      });
+      
+    }); 
+  
+    return false
+}
+
 app.get("/:id", function (request, response) {
-    var url = request.params.id;
+    var uid = request.params.id;
  
     var MongoClient = require('mongodb').MongoClient
 
     var URL = 'mongodb://tobiogunleye:Bagel99999@ds147900.mlab.com:47900/postmalone';
-    var fullUrl = request.headers['x-forwarded-proto'].split(',')[0] + '://' + request.get('host') + '/' + url;
+    var fullUrl = request.headers['x-forwarded-proto'].split(',')[0] + '://' + request.get('host') + '/' + uid;
     var togo = null;
  
     MongoClient.connect(URL, function(err, db) {
     
       var collection = db.collection('url');
       
-      collection.find({short_url: fullUrl}).toArray(function(err, docs) {
+      collection.find({uid: uid}).toArray(function(err, docs) {
  
         if(docs.length){
           
           togo =  docs[0].original_url; 
           (response.redirect(togo));
 
-        } 
+        } else{
+              console.log('result found');
+        }
         
         db.close();
       });
@@ -55,7 +87,7 @@ app.get("/new/*", function (request, response) {
   var url = request.params[0];
   if (request.params[0].length){
 
-    if(/^(http(?:s)?\:\/\/[a-zA-Z0-9]+(?:(?:\.|\-)[a-zA-Z0-9]+)+(?:\:\d+)?(?:\/[\w\-]+)*(?:\/?|\/\w+\.[a-zA-Z]{2,4}(?:\?[\w]+\=[\w\-]+)?)?(?:\&[\w]+\=[\w\-]+)*)$/.test(url)){
+    if(/(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/.test(url)){
       var MongoClient = require('mongodb').MongoClient
 
       var URL = 'mongodb://tobiogunleye:Bagel99999@ds147900.mlab.com:47900/postmalone';
@@ -64,22 +96,26 @@ app.get("/new/*", function (request, response) {
       MongoClient.connect(URL, function(err, db) {
       
       if (err) return
-
+      
       var collection = db.collection('url');
           collection.find({original_url: url}).toArray(function(err, docs) {
             if(!docs.length){
               console.log('no result')
-              var togo =  { "original_url": url, "short_url": generateURL(fullUrl) };
+              var uid = generateURL();
+              var togo =  { "original_url": url, "short_url": fullUrl + uid, "uid": uid };
               collection.insert(togo, function(err, result) {
                 console.log(err, result);
-                response.send(togo);
+                response.send({ 
+                          "original_url": url, 
+                          "short_url": fullUrl + uid 
+                         });
               });
+ 
             }else{
-              console.log('result found')
-              console.log(docs[0])
+              console.log('result found') 
               var togo = { 
                           "original_url": docs[0].original_url, 
-                           "short_url": docs[0].short_url 
+                          "short_url": docs[0].short_url 
                          };
               response.send(togo);
 
