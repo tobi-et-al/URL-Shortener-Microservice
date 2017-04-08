@@ -1,13 +1,14 @@
-# URL Shortener Microservice
+# File Metadata Microservice
 
   
-Example creation usage:
+Example usage:
 
-https://green-kitty.herokuapp.com/new/https://www.google.com
+Go to
+https://profuse-reason.herokuapp.com/ 
 
-https://green-kitty.herokuapp.com/new/http://foo.com:80
+upload file  
 
-Example creation output
+server response
 
     { 
       "original_url":"http://foo.com:80", 
