@@ -2,9 +2,12 @@
 
   
 Example usage:
+  
+Example creation usage:
 
-Go to
-https://profuse-reason.herokuapp.com/ 
+https://green-kitty.herokuapp.com/new/https://www.google.com
+
+https://green-kitty.herokuapp.com/new/http://foo.com:80
 
 upload file  
 
